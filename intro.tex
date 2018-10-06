@@ -1,0 +1,74 @@
+\section{Introduction}
+
+This paper proposes removing constraints on which members may be used in
+preconditions and postconditions of member functions. As an example, we propose
+that public member functions may use in their preconditions and postconditions
+protected and private members. This would lead to less boilerplate code.
+
+As an example, consider the following class.
+
+\begin{lstlisting}
+class X {
+public:
+  //...
+  // ptr_ must be non-null
+  double get_value() { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+
+If we want to express the precondition with contracts (and make it available to
+callers) we would not be able to write that contract without adding an
+additional function to the class to get access to the pointer.
+
+\begin{lstlisting}
+class X {
+public:
+  //...
+  double * get_ptr() { return ptr_; }
+
+  // ptr_ must be non-null
+  double get_value() [[expects: get_ptr()!=nullptr]] { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+
+By doing so we are exposing now the \cppid{ptr\_} member to the caller, which is what we
+wanted to avoid by encapsulating the pointer in class \cppid{X}.
+
+One could argue that a better solution would be to put the predicate in a public
+member function and avoiding to to expose the pointer to the callers.
+
+\begin{lstlisting}
+class X {
+public:
+  //...
+  bool valid_ptr() const { return ptr_!=nullptr; }
+
+  // ptr_ must be non-null
+  double get_value() [[expects: valid_ptr()]] { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+
+Even if this is slightly better, we still have the problem that the interface
+needs to be enlarged just to be able to express the contracts.
+
+In contrast, we propose that the private member function can be used in public
+contracts.
+
+\begin{lstlisting}
+class X {
+public:
+  //...
+
+  // ptr_ must be non-null
+  double get_value() [[expects: ptr_!=nullptr]] { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+

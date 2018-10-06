@@ -1,0 +1,117 @@
+\section{Problems with the current status quo}
+
+Currently the rules defining what can be used in a precondition and a
+postcondition are governed by clause \textbf{[dcl.attr.contract.cond]}.
+In summary those rules are:
+
+\begin{itemize}
+
+\item The predicate has the same semantic restrictions as if it appeared as the
+first statement in the body of the function.
+
+\item A contract condition of a public member function can only use public
+members or members of base classes that can be used as public members.
+
+\item A contract condition of a protected member function can only use public or
+protected members or members of base classes that can be used as public or
+protected members.
+
+\end{itemize}
+
+This leads to a number of problematic situations.
+
+\subsection{Exposing implementation details in the interface}
+
+On motivating case discussed at WG21 mailing list was:
+
+\begin{lstlisting}
+class X {
+  private:
+    internal_store s;
+  public:
+    void open();
+    void insert_data(const D & data) [[expects: s.is_open()]];
+};
+
+//...
+
+void insert_my_data(X & x, const D & d1, const D & d2) {
+  x.insert_data(d1);
+  x.insert_data(d2);
+}
+\end{lstlisting}
+
+The obvious precondition for function \cppid{insert\_my\_data()} is that
+\cppid{x.open()} must be called before. However, we cannot write that if we
+cannot used the private data member \cppid{s}.
+
+Peter Dimov suggested, three choices for the precondition of
+\cppid{insert\_data()} that we study here:
+
+\begin{enumerate}
+
+\item \cppid{X::insert\_data()} can state the preconditions in the form of
+\cppid{[[}\cppkey{expects}\cppid{]]} being able to access private members. In
+that case, the author of \cppid{insert\_my\_data()} cannot express its own
+precondition.
+
+\item \cppid{X::insert\_data()} cannot use private members in its
+\cppid{[[}\cppkey{expects}\cppid{]]} preconditions but can use an
+\cppid{}\cppkey{assert}\cppid{]]} in its body. In that case, the author of
+\cppid{insert\_my\_data()} cannot express its own preconditions. Consequently,
+this case is equivalent to the previous one.
+
+\item \cppid{X} could make its private state to become public, but this would
+lead to making the interal state of \cppid{X} visible to its clients.
+
+\end{enumerate}
+
+From these three scenarios, the worst case is scenario 3 because it goes agains
+abstraction and would favour a style where many implementation details are
+visible to clients. The key difference between options 1 and 2 are the ability
+(in option 1) to use private members in public contracts. However, a drawback of
+option 2 is that the precondition is no longer visible to the compiler at the
+caller site which reduces its usefulness.
+
+\subsection{Subverting the rules with inheritance}
+
+If a given class has a private member it will not be possible to use that member
+in the preconditions of that class. However, a derived class that exposes the
+member through \cppkey{using} would be able to use it in its own preconditions.
+
+Additionally a base class with a private virtual member function may use private
+members in its contract conditions. If a derived class overrides the member
+function as public we face the paradox that the overriden function needs to have
+the same contract conditions but that those conditions cannot be used because
+they cannot make use of private members.
+
+\subsection{Violation of information hiding principle}
+
+Some have argued that using private members in the contract condition of a
+public function would be leaking implementation details in the interface.
+However, it should be noted that we usually have a number of implementation
+details in header files today (inline function bodies, private members of
+classes or whole implementation of templates).
+
+The rationale behind information hiding principle is to limit the number of
+operations that have access to implementation details and to guarantee that
+invariants are kept. It should be noted that by allowing the use of private
+members in preconditions and postconditions we are not changing anything about
+this.
+
+Firstly, the invariants will be still held. This is a consequence from the fact
+that any precondition or postcondition that performs and observable modification
+of the state of the class would lead to undefined behaviour.
+
+Secondly, the client code cannot gain access to private members through the
+preconditions or postconditions. The only thing that cliente code may know is
+whether contract conditions are satisfied or not.
+
+\subsection{How do we handle the problems?}
+
+It is true that in most of the cases preconditions and postconditions should be
+expressed in terms of the public interface. However there cases that making of
+this an absolute rule would introduce excessive complications. On the other hand
+allowing access to private members are a simple solution for those cases.
+
+

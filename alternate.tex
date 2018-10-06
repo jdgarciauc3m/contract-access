@@ -1,0 +1,49 @@
+\section{Alternate solutions}
+
+It has been suggested by John Lakos to allow using access to private members in function
+declarations different from the first one.
+
+\begin{lstlisting}
+class X {
+private:
+  data_store s;
+public:
+  void insert_data(const D & d);
+};
+
+// ### Implementation only below this line
+void X::insert_data(const D & d) [[expects: s.is_open()]];
+\end{lstlisting}
+
+In such case, access to private members would be allowed only in subsequent
+declarations of a function, while the first declaration would be reserved only
+for use of public members.
+
+However, this (as pointed out by Ville Voutilainen) is a change that modifies the
+current requirement that a \emph{``contract predicate must appear in the first
+declaration of a function''} into the new requirement that a \emph{``contract
+predicate can appear in a non-first declaration of a function''}. This change
+would allow to have multiple non-first declarations with conflicting contract
+predicates.
+
+If declarations with conflicting contract predicates are allowed two options are
+possible:
+
+\begin{enumerate}
+
+\item Allow conflicting declarations as long as they appear in different
+translation units. In that case it would be possible that the same function is
+checked in different ways in different translation units. This approach presents
+a number of implementation problems. For example, it would be problematic to use
+the double entry point technique.
+
+\item Consider that conflicting contract predicates are \emph{ill-formed with no
+diagnostic required}. This option is more aligned with the approach alread taken
+for inline functions.
+
+\end{enumerate}
+
+Even if option 2 is more desirable than option 1, still this would be another
+introduction of \emph{ill-formed/no diagnostic required} which seems an
+unnecessary complication.
+
