@@ -197,6 +197,76 @@ achieve it easily with external synchronization.
 Consequently, there is precedent in the standard library for having
 preconditions that aren’t queryable and rely on users doing the right thing.
 
+\subsection{Refactoring an utility type}
+
+This idea came up fairly recently in a practical project. The ingredients we have are:
+
+\begin{itemize}
+
+\item
+there's a third-party type that looks a lot like a standard type.
+
+\item
+there's a desire to migrate the implementation and the uses of that third-party type to the standard type
+
+\item
+there are subtle differences in the API semantics of the third-party type and the standard type. What is desired is a way to check that those differences don't cause breakage during migration.
+
+\end{itemize}
+
+Interestingly, we can now say "contracts to the rescue!". So, we have something along the lines of:
+
+\begin{lstlisting}
+template <class T>
+class MyOptional {
+private:
+  MyOptional_impl<T> m_impl;
+public:
+  template <class T>
+  MyOptional(T&& val); // constraints omitted
+
+  template <class T>
+  MyOptional(const MyOptional<T>&& val);
+};
+\end{lstlisting}
+
+Now we want to first turn \cppid{MyOptional\_impl} into \cppid{std::optional}, and check that
+there was no practical impact. What we'll do is this:
+
+\begin{lstlisting}
+template <class T>
+class MyOptional {
+private:
+  MyOptional_impl<T> m_impl;
+public:
+  template <class U>
+  MyOptional(U&& val) // constraints omitted
+    [[ensures: different_optionals_initialized_the_same_way()]];
+
+  template <class U>
+  MyOptional(const MyOptional<U>& val);
+    [[ensures: different_optionals_initialized_the_same_way()]];
+
+  // other ctor overloads omitted
+
+  /* extremely */ private:
+  bool different_optionals_initialized_the_same_way();
+};
+\end{lstlisting}
+
+The idea here is that the check in the postcondition of a constructor verifies
+that the initialization of \cppid{MyOptional} did the same thing regardless of whether
+\cppid{m\_impl} is \cppid{MyOptional\_impl<T>} or \cppid{std::optional<T>}. The way it does is it
+initializes the member as usual, and then in the check, initializes another
+object of the different type and verifies that the engagedness and the value
+are the same. Same goes for assignments and other operations.
+
+Now, whether other people find such contract uses handy is an interesting
+question. To me, this is an astounding capability to have. It makes NO sense to
+expose this checking functionality for users of the type, but it's a really
+valuable thing to be able to do.
+
+
 \subsection{Avoiding repetition}
 
 In a function without a body, stating an assertion would imply adding the body

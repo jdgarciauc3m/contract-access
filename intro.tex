@@ -29,7 +29,7 @@ public:
   double * get_ptr() const { return ptr_; }
 
   // ptr_ must be non-null
-  double get_value() [[expects: get_ptr()!=nullptr]] { return *ptr_; }
+  double get_value() const [[expects: get_ptr()!=nullptr]] { return *ptr_; }
 private:
   double * ptr_; 
 };
@@ -48,7 +48,7 @@ public:
   bool valid_ptr() const { return ptr_!=nullptr; }
 
   // ptr_ must be non-null
-  double get_value() [[expects: valid_ptr()]] { return *ptr_; }
+  double get_value() const [[expects: valid_ptr()]] { return *ptr_; }
 private:
   double * ptr_; 
 };

@@ -1,0 +1,31 @@
+\section{Goals}
+
+The proposed change has the following goals:
+
+\begin{enumerate}
+
+\item
+Apply contracts to any existing API without changing the (programmatic) API; if
+the facilities via which a contract can be checked are not exposed via the
+accessible API but are available or injectable via or into the private or
+protected API, we still want to be able to apply contracts on such an API,
+including preconditions and postconditions.
+
+\item
+Design contract-enforced APIs from the scratch without having to introduce API
+entry points that expose the correctness checks; such exposure may be
+contradictory to the programmatic API's design.
+
+\end{enumerate}
+
+The current access restrictions prevent achieving either of those goals.
+Failing to achieve the first goal is a limitation on the applicability of
+contracts; some might say there's no harm done and it's a pure opportunity
+cost. Failing to achieve the second goal could be said to be even more an
+opportunity cost. Those opportunity costs seem to us too high to bear. It seems
+plausible that it would be unfortunate indeed if the applicability of contracts
+to existing APIs is limited this way, and it seems perhaps even more
+unfortunate to bear the cost of not being able to design new contract-enforced
+APIs without exposing checking facilities in a programmatic API, because that
+seems like a very good use of contracts, and a language capability that wasn't
+available before.

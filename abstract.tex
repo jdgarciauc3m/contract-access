@@ -1,7 +1,13 @@
 \begin{abstract}
-Visibility controls in contract conditions (preconditions and postconditions)
+Access controls in contract conditions (preconditions and postconditions)
 enforce that only members with the same or better access level are used in the
 corresponding predicates.
 This paper proposes to remove those controls and allow that every member can be
 used in a contract conditions.
+Allowing such access makes contract checking (completely) orthogonal to
+programmatic APIs, which has many benefits and only dubious disadvantages.
+Lifting the access restrictions would make contracts more applicable, allowing
+contracts to be used in a wider spectrum of API design choices, and
+allowing zero-overhead APIs to be designed without losing the ability to
+diagnose misuses.
 \end{abstract}
