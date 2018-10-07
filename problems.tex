@@ -22,7 +22,7 @@ This leads to a number of problematic situations.
 
 \subsection{Exposing implementation details in the interface}
 
-On motivating case discussed at WG21 mailing list was:
+One motivating case discussed at WG21 mailing list was:
 
 \begin{lstlisting}
 class X {
@@ -43,7 +43,7 @@ void insert_my_data(X & x, const D & d1, const D & d2) {
 
 The obvious precondition for function \cppid{insert\_my\_data()} is that
 \cppid{x.open()} must be called before. However, we cannot write that if we
-cannot used the private data member \cppid{s}.
+cannot use the private data member \cppid{s}.
 
 Peter Dimov suggested, three choices for the precondition of
 \cppid{insert\_data()} that we study here:
@@ -95,8 +95,8 @@ In such case class designer may well not want to give access to
 function, users might use it in client code (which seems undesirable for the
 original designer). In fact, they should use \cppid{std::call\_once()}.
 
-It is also interesting to note, that if the precondition and the postconditions
-where moved to assertions in the body of the function, information would be lost
+It is also interesting to note, that if the precondition and the postcondition
+where moved into assertions in the body of the function, information would be lost
 for some forms of static analysis as well as possible optimizations.
 
 \subsection{Subverting the rules with inheritance}
@@ -105,7 +105,7 @@ If a given class has a private member it will not be possible to use that member
 in the preconditions of that class. However, a derived class that exposes the
 member through \cppkey{using} would be able to use it in its own preconditions.
 
-Additionally a base class with a private virtual member function may use private
+Additionally, a base class with a private virtual member function may use private
 members in its contract conditions. If a derived class overrides the member
 function as public we face the paradox that the overridden function needs to have
 the same contract conditions but that those conditions cannot be used because
