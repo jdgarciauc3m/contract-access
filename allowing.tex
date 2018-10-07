@@ -1,0 +1,138 @@
+\section{Reasons to simplify control access}
+
+\subsection{Zero-overhead principle}
+
+Private access can help allow contracts to promote zero-overhead
+don’t-pay-for-what-you-don’t-use code, while giving users a debugging aid to
+find out why they ran into undefined behavior when they do.  Some APIs require
+operations to be done in certain order, and contracts could be used to check
+for that.  
+
+Consider a \cppid{FastFileChannel} where the caller is required to call open
+before calling \cppid{insert\_data}:
+
+\begin{lstlisting}
+class FastFileChannel {
+public:
+  bool open(size_t howbig);  // can fail
+
+  void insert_data(Data data) [[expects: f.is_open() && data.size() <= f.available_size()]];
+
+private:
+  File f;
+};
+\end{lstlisting}
+
+Or a \cppid{FastBuffer} where the caller is required to reserve sufficient
+capacity before \cppid{push\_back} is called. In this example we assume that
+vector has \cppid{reserve\_nothrow} and \cppid{push\_back\_unchecked} as
+proposed in P0132~\cite{p0132}
+
+\begin{lstlisting}
+
+class FastBuffer {
+public:
+  bool reserve(size_t howmany);
+
+  void push_back() [[expects: buf.size() < buf.capacity() ]];
+
+private:
+  vector<char> buf;
+};
+\end{lstlisting}
+
+Calling \cppid{FastBuffer::push\_back} and
+\cppid{FastFileChannel::insert\_data} will perform no capacity checks, and the
+\cppid{insert\_data} operation will perform no checks on whether the file is
+open for writing or whether the data fits. The intent is that the API makes it
+impossible to write slow code: \cppid{file.is\_open()} is deliberately not
+exposed, because exposing it has a time and space cost that is not otherwise
+incurred.
+
+If the concern is about \emph{``exposing implementation details to the client''}, then
+allowing private member access from preconditions and postconditions
+of public member functions does not do that, whereas the suggestion to just
+write public getters for those privates would expose them.
+
+In summary, the desire is that:
+
+\begin{itemize}
+
+\item Callers are required/assumed to be correct.
+
+\item If the contract is violated, undefined behavior is okay.
+
+\item The programmer can guarantee zero checking overhead of the contract in
+release builds. \cppid{File::available\_size()} is assumed to be expensive and the
+desire it that it not be callable in non-checked modes, or alternatively it
+does nothing. (This further means that such queries are ill-suited to be
+exposed in an API.) 
+
+\end{itemize}
+
+There are different ways to design such APIs (have a \cppid{File} create a
+\cppid{FastFileChannel} that is guaranteed to be open and sized), but it’s not
+obvious that such approaches are better, and they might not be feasible
+considering existing code and existing uses.
+
+\subsection{Interface design}
+
+Tony Van Eerd provided an interesting example with \emph{iterators}:
+
+Consider the \cppid{erase()} member function from a container. A precondition
+would be that the passed iterator refers to an element in that container.
+
+\begin{lstlisting}
+void vector::erase(iterator it) [[expects: is_my_iterator(it)]];
+\end{lstlisting}
+
+Function \cppid{is\_my\_iterator()} is only mildly useful outside a contract.
+Yet, with current control access it would be necessary to expose it in the
+public interfaces. Usually, such public member function could be considered a
+code-smell in normal code.
+
+Similarly, consider the sort algorithm where \cppid{last} iterator must be
+reachable from \cppid{first}.
+
+\begin{lstlisting}
+template <typename I>
+void sort(I first, I last) [[expects: reachable(first,last)]];
+\end{lstlisting}
+
+Function \cppid{reachable()} might only be an approximation (e.g. are both
+iterators in the same container?). Such approximation would not be suitable as a
+public member function unless naming has been performed very very carefully.
+
+\subsection{Information hiding}
+
+Access to non exposed members is reasonable because there may already be
+suitable private members and they are private for a reason, and exposing them
+conflicts with that reason.  Additionally, some such private members may be
+conditionally available, and are thus ill-suited for exposure to users.
+
+There are additional observations to be considered. Those observations happen
+to match some age-old principles rather well:
+
+\begin{enumerate}
+
+\item If the concern is abuse (\emph{``unmaintainable mini-programs''}), that
+should not prevent allowing programmers who know what they are doing from doing
+so. This is, \emph{``trust the programmer''}.
+
+\item If a programmatic API does not expose certain members, that is for a
+reason. Having to expose those members to use them in declaration-level
+contract predicates violates \emph{``do not pay for what you don't use''}, not
+just on the performance level, but on that level as well.
+
+\item Finally, being able to keep members private and being able to use them in
+declaration-level contract predicates supports programming with the
+"zero-overhead principle".
+
+\end{enumerate}
+
+The members may be conditionally available, or may have do-nothing semantics in
+release mode, which makes them (in some designs, not all) ill-suited for
+exposure to public clients. In addition, using such members is not necessary to
+write correct programs, and using them introduces branches, conditions and
+checks that, in some cases, the API designer does not want to encourage.
+
