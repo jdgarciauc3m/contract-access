@@ -62,12 +62,12 @@ precondition.
 this case is equivalent to the previous one.
 
 \item \cppid{X} could make its private state to become public, but this would
-lead to making the interal state of \cppid{X} visible to its clients.
+lead to making the internal state of \cppid{X} visible to its clients.
 
 \end{enumerate}
 
-From these three scenarios, the worst case is scenario 3 because it goes agains
-abstraction and would favour a style where many implementation details are
+From these three scenarios, the worst case is scenario 3 because it goes against
+abstraction and would favor a style where many implementation details are
 visible to clients. The key difference between options 1 and 2 are the ability
 (in option 1) to use private members in public contracts. However, a drawback of
 option 2 is that the precondition is no longer visible to the compiler at the
@@ -81,7 +81,7 @@ member through \cppkey{using} would be able to use it in its own preconditions.
 
 Additionally a base class with a private virtual member function may use private
 members in its contract conditions. If a derived class overrides the member
-function as public we face the paradox that the overriden function needs to have
+function as public we face the paradox that the overridden function needs to have
 the same contract conditions but that those conditions cannot be used because
 they cannot make use of private members.
 
@@ -101,10 +101,10 @@ this.
 
 Firstly, the invariants will be still held. This is a consequence from the fact
 that any precondition or postcondition that performs and observable modification
-of the state of the class would lead to undefined behaviour.
+of the state of the class would lead to undefined behavior.
 
 Secondly, the client code cannot gain access to private members through the
-preconditions or postconditions. The only thing that cliente code may know is
+preconditions or postconditions. The only thing that client code may know is
 whether contract conditions are satisfied or not.
 
 \subsection{How do we handle the problems?}
