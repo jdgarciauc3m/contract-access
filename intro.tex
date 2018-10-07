@@ -12,7 +12,7 @@ class X {
 public:
   //...
   // ptr_ must be non-null
-  double get_value() { return *ptr_; }
+  double get_value() const { return *ptr_; }
 private:
   double * ptr_; 
 };
@@ -26,7 +26,7 @@ additional function to the class to get access to the pointer.
 class X {
 public:
   //...
-  double * get_ptr() { return ptr_; }
+  double * get_ptr() const { return ptr_; }
 
   // ptr_ must be non-null
   double get_value() [[expects: get_ptr()!=nullptr]] { return *ptr_; }
