@@ -73,6 +73,32 @@ visible to clients. The key difference between options 1 and 2 are the ability
 option 2 is that the precondition is no longer visible to the compiler at the
 caller site which reduces its usefulness.
 
+\subsection{Ensuring single initialization}
+
+Another example (provided by Lo\"{i}c Joly) where access control in contracts leads excesive implementation
+leakage to clientes is single initialization of global state.
+
+\begin{lstlisting}
+class System {
+public:
+  static void globalInit()
+    [[expects: !alreadyCalled]]
+    [[ensures: alreadyCalled]];
+private:
+  static inline bool alreadyCalled = false;
+};
+\end{lstlisting}
+
+In such case class designer may well not want to give access to
+\cppid{alreadyCalled}, since it is only there to help finding bugs. If
+\cppid{alreadyCalled} was exposed through a public \cppid{isAlreadyCalled()}
+function, users might use it in client code (which seems undesirable for the
+original designer). In fact, they should use \cppid{std::call\_once()}.
+
+It is also interesting to note, that if the precondition and the postconditions
+where moved to assertions in the body of the function, information would be lost
+for some forms of static analysis as well as possible optimizations.
+
 \subsection{Subverting the rules with inheritance}
 
 If a given class has a private member it will not be possible to use that member
@@ -149,6 +175,27 @@ private:
 The use of preconditions (instead of assertions) als makes much more visible
 that the function does not have an empty contract and that there are
 preconditions to be satisfied.
+
+\subsection{Examples of multistate interfaces}
+
+Mathias Stearn pointed out that
+\cppid{std::promise} has many member functions that should only be called if it
+is in certain states, but the current state isn’t exposed. For example, you can
+only call \cppid{get\_future()} once, and it must not be in a \emph{moved-from}
+state. The same thing happens for the completion member functions, as calling any of
+them disallows calling any other as well. Now, technically they are defined to
+throw if they are misused. Consequently, technically speaking they are not
+preconditions and the corresponding member functions have an empty contract (a
+contract with now preconditions and no postconditions). 
+
+However, many have argued that those kinds of APIs are a bad idea. In this case
+it was because of a potential usage pattern that allows multiple threads to race
+to complete the promise with a first-in-wins resolution, but that imposes a huge
+cost on all users, when many don’t need that ability, and those that do could
+achieve it easily with external synchronization.
+
+Consequently, there is precedent in the standard library for having
+preconditions that aren’t queryable and rely on users doing the right thing.
 
 \subsection{Avoiding repetition}
 
