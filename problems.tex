@@ -107,6 +107,82 @@ Secondly, the client code cannot gain access to private members through the
 preconditions or postconditions. The only thing that client code may know is
 whether contract conditions are satisfied or not.
 
+\subsection{Expressing semantics accurately}
+
+If a precondition involves private members and we do not want to expose details
+by enlarging the class interface, one alternative could be to add an assert to
+the function body:
+
+\begin{lstlisting}
+class X {
+public:
+  //...
+
+  // ptr_ must be non-null
+  double get_value() const;
+private:
+  double * ptr_;
+};
+
+double X::get_value() const {
+  [[assert: ptr_!=nullptr]];
+  return ptr_;
+}
+\end{lstlisting}
+
+However, now it is not so clear that the intent of the developer is that the
+client has the responsibility to make sure that the precondition is satisfied
+before calling the member function.
+
+\begin{lstlisting}
+class X {
+public:
+  //...
+
+  // ptr_ must be non-null
+  double get_value() const [[expects: ptr_!=nullptr]] { return ptr_; }
+private:
+  double * ptr_;
+};
+\end{lstlisting}
+
+The use of preconditions (instead of assertions) als makes much more visible
+that the function does not have an empty contract and that there are
+preconditions to be satisfied.
+
+\subsection{Avoiding repetition}
+
+In a function without a body, stating an assertion would imply adding the body
+just becase of the assertion. However, any assertion in an empty body may be
+seen as a precondition. Consequently, allowing the use of private members in
+public functions eliminates a case where otherwise an assertion is needed to
+simulate a precondition.
+
+Additionally, in the case of overridden functions, preconditions in the form of
+\cppid{[[}\cppkey{expects}\cppid{]]} will be present in all overridden
+functions, while ussing assertions to simulate preconditions would lead to the
+need of repeating the assertion in each overridden function and the possibility
+for forgetting it in some function. 
+
+\subsection{Simplicity and regularity}
+
+Havin special rules for accessibility in preconditions and postconditions are a
+complication in the language. Programmers need to remember different sets of
+rules when they are writing function bodies or when they are stating
+preconditions and postconditions.
+
+A simpler rule is to mandate that the access control performed in preconditions
+and postconditions are exactly the same than in function bodies.
+
+\subsection{Supporting multiple styles}
+
+One key characteristic of C++ has been its ability to support multiple styles of
+programming and not imposing a single style over the others.
+
+Allowing access to private members while allowed might be rare. Still, some
+styles or programming might decide not use private members, while other styles
+might need that.
+
 \subsection{How do we handle the problems?}
 
 It is true that in most of the cases preconditions and postconditions should be
