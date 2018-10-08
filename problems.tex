@@ -75,8 +75,8 @@ caller site which reduces its usefulness.
 
 \subsection{Ensuring single initialization}
 
-Another example (provided by Lo\"{i}c Joly) where access control in contracts leads excesive implementation
-leakage to clientes is single initialization of global state.
+Another example (provided by Lo\"{i}c Joly) where access control in contracts leads excessive implementation
+leakage to clients is single initialization of global state.
 
 \begin{lstlisting}
 class System {
@@ -172,11 +172,11 @@ private:
 };
 \end{lstlisting}
 
-The use of preconditions (instead of assertions) als makes much more visible
+The use of preconditions (instead of assertions) also makes much more visible
 that the function does not have an empty contract and that there are
 preconditions to be satisfied.
 
-\subsection{Examples of multistate interfaces}
+\subsection{Examples of multi-state interfaces}
 
 Mathias Stearn pointed out that
 \cppid{std::promise} has many member functions that should only be called if it
@@ -269,21 +269,80 @@ valuable thing to be able to do.
 
 \subsection{Avoiding repetition}
 
-In a function without a body, stating an assertion would imply adding the body
-just becase of the assertion. However, any assertion in an empty body may be
-seen as a precondition. Consequently, allowing the use of private members in
-public functions eliminates a case where otherwise an assertion is needed to
-simulate a precondition.
-
-Additionally, in the case of overridden functions, preconditions in the form of
+In the case of overridden functions, preconditions in the form of
 \cppid{[[}\cppkey{expects}\cppid{]]} will be present in all overridden
-functions, while ussing assertions to simulate preconditions would lead to the
-need of repeating the assertion in each overridden function and the possibility
-for forgetting it in some function. 
+functions. 
+
+\begin{lstlisting}
+class A {
+public:
+  //...
+  virtual void f() [[expects: ptr_!=nullptr]];
+private:
+  double * ptr_;
+};
+
+class B : public A {
+public:
+  //...
+  void f() [[expects: ptr_!=nullptr]];
+};
+\end{lstlisting}
+
+When the precondition needs to use a a private member, two options are
+possible.
+
+First option is to add a public member function encapsulating the predicate.
+This option has already been criticized in previous sections.
+
+\begin{lstlisting}
+class A {
+public:
+  //...
+  bool is_valid() const { return ptr_!=nullptr; }
+  virtual void f() [[expects: is_valid()]];
+private:
+  double * ptr_;
+};
+
+class B : public A {
+public:
+  //...
+  void f() [[expects: is_valid()]];
+};
+\end{lstlisting}
+
+A second option would be to move assertions to the function bodies in the form
+of \cppkey{assert}.
+
+\begin{lstlisting}
+class A {
+public:
+  //...
+  virtual void f() {
+    [[assert: ptr_!=nullptr]];
+    //...
+  }
+private:
+  double * ptr_;
+};
+
+class B : public A {
+public:
+  //...
+  virtual void f() {
+    [[assert: ptr_!=nullptr]];
+    //...
+  }
+};
+\end{lstlisting}
+
+This option leads to the need of repeating the assertion in each overridden
+function and the possibility for forgetting it in some function. 
 
 \subsection{Simplicity and regularity}
 
-Havin special rules for accessibility in preconditions and postconditions are a
+Having special rules for accessibility in preconditions and postconditions are a
 complication in the language. Programmers need to remember different sets of
 rules when they are writing function bodies or when they are stating
 preconditions and postconditions.
@@ -302,9 +361,9 @@ might need that.
 
 \subsection{How do we handle the problems?}
 
-It is true that in most of the cases preconditions and postconditions should be
-expressed in terms of the public interface. However there cases that making of
+It is true that in most of the cases preconditions and postconditions should and can be
+expressed in terms of the public interface. However there cases where making 
 this an absolute rule would introduce excessive complications. On the other hand
-allowing access to private members are a simple solution for those cases.
+allowing access to private members is a simple solution for those cases.
 
 
