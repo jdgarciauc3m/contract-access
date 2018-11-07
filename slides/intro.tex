@@ -1,0 +1,68 @@
+\section{Introduction}
+
+\begin{frame}[t,fragile]{A simple class}
+\begin{block}{Original}
+\begin{lstlisting}
+class X {
+public:
+  //...
+  // ptr_ must be non-null
+  double get_value() const { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[t,fragile]{Add a contract today}
+\begin{block}{Need new getter: Details exposed}
+\begin{lstlisting}
+class X {
+public:
+  //...
+  double * get_ptr() const { return ptr_; }
+
+  // ptr_ must be non-null
+  double get_value() const [[expects: get_ptr()!=nullptr]] 
+      { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[t,fragile]{With predicate functions}
+\begin{block}{Still enlarging the interface}
+\begin{lstlisting}
+class X {
+public:
+  //...
+  bool valid_ptr() const { return ptr_!=nullptr; }
+
+  // ptr_ must be non-null
+  double get_value() const [[expects: valid_ptr()]] 
+      { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[t,fragile]{What we propose}
+\begin{block}{Avoid boilerplate}
+\begin{lstlisting}
+class X {
+public:
+  // ptr_ must be non-null
+  double get_value() const [[expects: ptr_!=nullptr]] 
+      { return *ptr_; }
+private:
+  double * ptr_; 
+};
+\end{lstlisting}
+\end{block}
+\end{frame}
+
