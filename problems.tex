@@ -180,7 +180,7 @@ preconditions to be satisfied.
 
 Mathias Stearn pointed out that
 \cppid{std::promise} has many member functions that should only be called if it
-is in certain states, but the current state isn’t exposed. For example, you can
+is in certain states, but the current state isn't exposed. For example, you can
 only call \cppid{get\_future()} once, and it must not be in a \emph{moved-from}
 state. The same thing happens for the completion member functions, as calling any of
 them disallows calling any other as well. Now, technically they are defined to
@@ -195,7 +195,7 @@ cost on all users, when many don’t need that ability, and those that do could
 achieve it easily with external synchronization.
 
 Consequently, there is precedent in the standard library for having
-preconditions that aren’t queryable and rely on users doing the right thing.
+preconditions that aren't queryable and rely on users doing the right thing.
 
 \subsection{Refactoring an utility type}
 
