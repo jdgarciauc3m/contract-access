@@ -38,6 +38,15 @@ morekeywords=[1]{
 expects,ensures
 }}
 
+\newcommand\redout{\bgroup\markoverwith
+{\textcolor{red}{\rule[.5ex]{2pt}{0.4pt}}}\ULon}
+
+\newcommand{\remove}[1]{ {\setstcolor{red} \st{#1}} }
+
+\newcommand{\add}[1]{
+{\colorbox{green}{#1}}
+}
+
 \newcommand{\cppkey}[1]{%
 {\color{green!40!black}\texttt{#1}}%
 }
